@@ -42,4 +42,6 @@ void function PilotRegisterNetworkVars()
 	Remote_RegisterFunction( "ServerCallback_YouArePilot" )
 	Remote_RegisterFunction( "ServerCallback_AnnouncePilot" )
 	Remote_RegisterFunction( "ServerCallback_PilotDamageTaken" )
+	Remote_RegisterFunction( "ServerCallback_ShowPilotHealthUI" )
+	Remote_RegisterFunction( "ServerCallback_HidePilotHealthUI" )
 }

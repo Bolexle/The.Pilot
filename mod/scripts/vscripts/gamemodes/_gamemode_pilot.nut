@@ -19,7 +19,6 @@ void function GamemodePilot_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstPilot )
 	AddCallback_GameStateEnter( eGameState.Postmatch, RemovePilot )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
-	
 
 	thread PredatorMain()
 
@@ -28,7 +27,6 @@ void function GamemodePilot_Init()
 void function PilotInitPlayer( entity player )
 {
 	SetTeam( player, TEAM_MILITIA )
-	AddEntityCallback_OnDamaged( player, CheckHealth )
 }
 
 void function SelectFirstPilot()
@@ -64,7 +62,8 @@ void function UpdateSurvivorsLoadout()
 			continue;
 		
 		player.SetPlayerSettingsWithMods( player.GetPlayerSettings(), [ "disable_wallrun", "disable_doublejump"])
-
+		player.kv.airacceleration = 50
+		
 		foreach ( entity weapon in player.GetMainWeapons() )
 			player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
@@ -95,10 +94,10 @@ void function RespawnPilot(entity player)
 	if (player.GetTeam() != TEAM_IMC )
 		return
 
-	// scale health of the Pilot, with 50 as base health
-	player.SetMaxHealth( 100 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 30) )
-	player.SetHealth( 100 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 30) )
-
+	// Add pilot shield
+	player.SetShieldHealthMax( 50 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 50))
+	player.SetShieldHealth( 100 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 50) )
+	PilotHealthCheck( player )
 	print(player.GetMaxHealth())
 
 	if ( !player.IsMechanical() )
@@ -128,6 +127,7 @@ void function GiveArcGrenade(entity player)
 
 void function PilotOnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	Remote_CallFunction_NonReplay( victim, "ServerCallback_HidePilotHealthUI")
 	if ( !victim.IsPlayer() || GetGameState() != eGameState.Playing )
 		return
 
@@ -136,7 +136,6 @@ void function PilotOnPlayerKilled( entity victim, entity attacker, var damageInf
 		// increase kills by 1
 		attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
 	}
-
 }
 
 void function UpdateLoadout( entity player )
@@ -207,32 +206,16 @@ void function PredatorMain()
 	}
 }
 
-void function CheckHealth(entity player, var damageInfo)
-{
-	foreach (entity player in GetPlayerArray())
-	{
-		if (player.GetTeam() != TEAM_IMC || player == null || player.GetMaxHealth() == 50)
-			continue
-
-		float maxHealthCap = 50
-
-    	float damage = DamageInfo_GetDamage( damageInfo )
-   		float newMaxHealth = player.GetMaxHealth() - damage
-
-    	player.SetMaxHealth( max( maxHealthCap, newMaxHealth ) )
-		print(player.GetMaxHealth())
-
-		int maxHealthString = newMaxHealth.tointeger()
-
-		Remote_CallFunction_NonReplay( player, "ServerCallback_PilotDamageTaken", maxHealthString )
-
-	}
-}
-
 int function TimeoutCheckSurvivors()
 {
 	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > 0 )
 		return TEAM_IMC
 
 	return TEAM_MILITIA
+}
+
+void function PilotHealthCheck( entity player )
+{
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowPilotHealthUI" )
+	print("Running UI Script")
 }

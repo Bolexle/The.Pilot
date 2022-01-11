@@ -2,6 +2,10 @@ global function ClGamemodePilot_Init
 global function ServerCallback_YouArePilot
 global function ServerCallback_AnnouncePilot
 global function ServerCallback_PilotDamageTaken
+global function ServerCallback_ShowPilotHealthUI
+global function ServerCallback_HidePilotHealthUI
+
+global var healthRui
 
 void function ClGamemodePilot_Init()
 {
@@ -50,6 +54,7 @@ void function ServerCallback_YouArePilot()
 void function ServerCallback_PilotDamageTaken( int remainingHP )
 {
 	// heavily based on mfd code
+	/**
 	entity localPlayer = GetLocalViewPlayer()
 	string health = remainingHP.tostring()
 	AnnouncementData announcement = Announcement_Create( health + " Health remaining" )
@@ -59,6 +64,7 @@ void function ServerCallback_PilotDamageTaken( int remainingHP )
 	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
 	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
 	AnnouncementFromClass( localPlayer, announcement )
+	**/
 }
 
 void function ServerCallback_AnnouncePilot( int survivorEHandle )
@@ -74,3 +80,77 @@ void function ServerCallback_AnnouncePilot( int survivorEHandle )
 	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
 	AnnouncementFromClass( GetLocalViewPlayer(), announcement )
 }
+
+struct
+{
+	int healthPerSegment = 20
+	bool healthVisible = false
+	var healthRui
+} file
+
+void function ServerCallback_ShowPilotHealthUI(int healthPerSegment = 20)
+{
+	file.healthPerSegment = healthPerSegment
+	print("we are getting there")
+	entity player = GetLocalViewPlayer()
+	if ( file.healthRui == null ) {
+		file.healthRui = CreateCockpitRui( $"ui/ajax_cockpit_base.rpak" )
+		healthRui = file.healthRui
+
+		RuiTrackFloat3( file.healthRui, "playerOrigin", player, RUI_TRACK_ABSORIGIN_FOLLOW )
+		RuiTrackFloat3( file.healthRui, "playerEyeAngles", player, RUI_TRACK_EYEANGLES_FOLLOW )
+		RuiTrackFloat( file.healthRui, "healthFrac", player, RUI_TRACK_HEALTH )
+		RuiTrackFloat( file.healthRui, "shieldFrac", player, RUI_TRACK_SHIELD_FRACTION )
+
+		RuiSetBool( file.healthRui, "ejectIsAllowed", false ) // You need this or the entire rui doesn't show up, fun!
+
+		float health = player.GetPlayerModHealth()
+		RuiSetInt( file.healthRui, "numHealthSegments", int( health / file.healthPerSegment ) )
+
+		RuiTrackFloat( file.healthRui, "cockpitColor", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.cockpitColor )
+	}
+
+	file.healthVisible = true
+	RuiSetDrawGroup( file.healthRui, RUI_DRAW_COCKPIT )
+
+	thread PilotHealthChangedThink( player )
+}
+
+void function ServerCallback_HidePilotHealthUI()
+{
+	file.healthVisible = false
+
+	if (file.healthRui != null)
+		RuiSetDrawGroup( file.healthRui, RUI_DRAW_NONE )
+}
+
+void function PilotHealthChangedThink( entity player )
+{
+	while ( file.healthVisible )
+	{
+		table results = WaitSignal( player, "HealthChanged" )
+
+		if ( !IsAlive( player ) )
+			continue
+
+		float maxHealth = player.GetPlayerModHealth()
+		RuiSetInt( file.healthRui, "numHealthSegments", int( maxHealth / file.healthPerSegment ) )
+
+		float oldHealthFrac = float( results.oldHealth ) / maxHealth 
+		float newHealthFrac = float( results.newHealth ) / maxHealth
+
+		if ( oldHealthFrac > newHealthFrac )
+		{
+			var rui = CreateCockpitRui( $"ui/ajax_cockpit_lost_health_segment.rpak", 10 )
+			RuiSetGameTime( rui, "startTime", Time() )
+			RuiSetFloat( rui, "oldHealthFrac", oldHealthFrac )
+			RuiSetFloat( rui, "newHealthFrac", newHealthFrac )
+
+			RuiSetInt( rui, "numHealthSegments", int( maxHealth / file.healthPerSegment ) )
+		} else {
+			RuiSetGameTime( file.healthRui, "startFlashTime", Time() )
+			RuiSetFloat3( file.healthRui, "flashColor", <0.0,1.0,0.0> )
+		}
+	}
+}
+
