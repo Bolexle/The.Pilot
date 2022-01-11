@@ -23,6 +23,10 @@
         {
             "Path": "gamemodes/_gamemode_pilot.nut",
             "RunOn": "SERVER"
+        },
+        {
+            "Path": "weapons/mp_weapon_grenade_sonar_pilot.nut",
+            "RunOn": "CLIENT || SERVER"
         }
     ]
 }

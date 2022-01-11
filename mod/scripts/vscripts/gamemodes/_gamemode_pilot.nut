@@ -3,6 +3,7 @@ global function GamemodePilot_Init
 
 void function GamemodePilot_Init()
 {
+	PrecacheWeapon("mp_weapon_grenade_sonar_pilot")
 	SetShouldUseRoundWinningKillReplay( true )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
@@ -27,6 +28,7 @@ void function GamemodePilot_Init()
 void function PilotInitPlayer( entity player )
 {
 	SetTeam( player, TEAM_MILITIA )
+	AddEntityCallback_OnDamaged( player, CheckHealth )
 }
 
 void function SelectFirstPilot()
@@ -95,8 +97,8 @@ void function RespawnPilot(entity player)
 		return
 
 	// Add pilot shield
-	player.SetShieldHealthMax( 50 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 50))
-	player.SetShieldHealth( 100 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 50) )
+	player.SetShieldHealthMax( 25 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 25) )
+	player.SetShieldHealth( 25 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 25) )
 	PilotHealthCheck( player )
 	print(player.GetMaxHealth())
 
@@ -112,7 +114,7 @@ void function RespawnPilot(entity player)
 
 	player.GiveWeapon("mp_weapon_wingman_n")
 	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
-	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_SPECIAL )
+	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar_pilot", OFFHAND_SPECIAL )
 	player.GiveOffhandWeapon( "mp_ability_grapple", OFFHAND_RIGHT )
 	thread UpdateLoadout(player)
 	thread GiveArcGrenade(player)
@@ -198,7 +200,7 @@ void function PredatorMain()
 					continue
 				player.SetCloakFlicker(0.2 , 1 )
 				player.kv.VisibilityFlags = 0
-				float waittime = RandomFloat(0.5)
+				float waittime = 1.0
 				wait waittime
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 			}
@@ -218,4 +220,23 @@ void function PilotHealthCheck( entity player )
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowPilotHealthUI" )
 	print("Running UI Script")
+}
+
+void function CheckHealth(entity player, var damageInfo)
+{
+	foreach (entity player in GetPlayerArray())
+	{
+		if (player.GetTeam() != TEAM_IMC || player == null || !IsValid(player) || !IsAlive(player) )
+			continue
+
+		float damage = DamageInfo_GetDamage( damageInfo )
+		print("Damage Dealt " + damage.tostring())
+		print("Shields: " + player.GetShieldHealth().tostring())
+		print("Health: " + player.GetHealth().tostring())
+		player.SetCloakFlicker(0.2 , 1 )
+		player.kv.VisibilityFlags = 0
+		float waittime = RandomFloat(0.5)
+		wait waittime
+		player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	}
 }
