@@ -221,6 +221,11 @@ void function CheckHealth(entity player, var damageInfo)
 
     	player.SetMaxHealth( max( maxHealthCap, newMaxHealth ) )
 		print(player.GetMaxHealth())
+
+		int maxHealthString = newMaxHealth.tointeger()
+
+		Remote_CallFunction_NonReplay( player, "ServerCallback_PilotDamageTaken", maxHealthString )
+
 	}
 }
 
