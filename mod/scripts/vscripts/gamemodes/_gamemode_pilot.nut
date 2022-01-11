@@ -211,9 +211,9 @@ void function PredatorMain()
 int function TimeoutCheckSurvivors()
 {
 	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > 0 )
-		return TEAM_IMC
+		return TEAM_MILITIA
 
-	return TEAM_MILITIA
+	return TEAM_IMC
 }
 
 void function PilotHealthCheck( entity player )
