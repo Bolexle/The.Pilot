@@ -224,19 +224,16 @@ void function PilotHealthCheck( entity player )
 
 void function CheckHealth(entity player, var damageInfo)
 {
-	foreach (entity player in GetPlayerArray())
-	{
-		if (player.GetTeam() != TEAM_IMC || player == null || !IsValid(player) || !IsAlive(player) )
-			continue
+	if (player.GetTeam() != TEAM_IMC || player == null || !IsValid(player) || !IsAlive(player) )
+		return
+	thread FlickerOnDamage( player )
+}
 
-		float damage = DamageInfo_GetDamage( damageInfo )
-		print("Damage Dealt " + damage.tostring())
-		print("Shields: " + player.GetShieldHealth().tostring())
-		print("Health: " + player.GetHealth().tostring())
-		player.SetCloakFlicker(0.2 , 1 )
-		player.kv.VisibilityFlags = 0
-		float waittime = RandomFloat(0.5)
-		wait waittime
-		player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
-	}
+void function FlickerOnDamage( entity player )
+{
+	player.SetCloakFlicker(0.2 , 1 )
+	player.kv.VisibilityFlags = 0
+	float waittime = RandomFloat(0.5)
+	wait waittime
+	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 }
