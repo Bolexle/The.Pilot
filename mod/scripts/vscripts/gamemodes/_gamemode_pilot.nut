@@ -3,10 +3,6 @@ global function PlayGruntPlayerChatterMPLine
 global function VoicePlayback
 global function CheckLOS
 
-global float xcoord
-global float ycoord
-global int value
-
 void function GamemodePilot_Init()
 {
 	PrecacheWeapon("mp_weapon_grenade_sonar_pilot")
@@ -44,7 +40,7 @@ void function SelectFirstPilot()
 
 void function SelectFirstPilotDelayed()
 {
-	wait 1.0 + RandomFloat( 1.0 )
+	wait 8.0 + RandomFloat( 8.0 )
 
 	array<entity> players = GetPlayerArray()
 	entity Pilot = players[ RandomInt( players.len() ) ]
