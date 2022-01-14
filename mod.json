@@ -28,6 +28,9 @@
             "Path": "weapons/mp_weapon_grenade_sonar_pilot.nut",
             "RunOn": "CLIENT || SERVER"
         }
-    ]
+    ],
+    "Localisation": [
+		"resource/the_pilot_%language%.txt"
+	]
 }
 

@@ -3,6 +3,10 @@ global function PlayGruntPlayerChatterMPLine
 global function VoicePlayback
 global function CheckLOS
 
+global float xcoord
+global float ycoord
+global int value
+
 void function GamemodePilot_Init()
 {
 	PrecacheWeapon("mp_weapon_grenade_sonar_pilot")
@@ -40,7 +44,7 @@ void function SelectFirstPilot()
 
 void function SelectFirstPilotDelayed()
 {
-	wait 8.0 + RandomFloat( 8.0 )
+	wait 1.0 + RandomFloat( 1.0 )
 
 	array<entity> players = GetPlayerArray()
 	entity Pilot = players[ RandomInt( players.len() ) ]
@@ -276,7 +280,7 @@ bool function CheckLOS(entity player, entity playerToSee) {
     float dist = 1000.0
 
     // check fov, constant here is stolen from every other place this is done
-    if ( VectorDot_PlayerToOrigin( player, playerToSeeOrigin ) > 0.8 )
+    if ( VectorDot_PlayerToOrigin( player, playerToSeeOrigin ) < 0.8 )
         return false
 
     // check distance, constant here is basically arbitrary
