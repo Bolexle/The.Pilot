@@ -276,7 +276,7 @@ bool function CheckLOS(entity player, entity playerToSee) {
     float dist = 1000.0
 
     // check fov, constant here is stolen from every other place this is done
-    if ( VectorDot_PlayerToOrigin( player, playerToSeeOrigin ) > 0.8 )
+    if ( VectorDot_PlayerToOrigin( player, playerToSeeOrigin ) < 0.8 )
         return false
 
     // check distance, constant here is basically arbitrary
